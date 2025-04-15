@@ -9,6 +9,7 @@ import {translateExtractedText} from '@/ai/flows/translate-extracted-text';
 import {Card, CardContent, CardDescription, CardHeader, CardTitle} from '@/components/ui/card';
 import {useToast} from '@/hooks/use-toast';
 import {Input} from "@/components/ui/input";
+import {Loader2} from "lucide-react";
 
 export default function Home() {
   const [extractedText, setExtractedText] = useState<string>('');
@@ -149,7 +150,14 @@ export default function Home() {
           </div>
 
           <Button onClick={handleExtractText} disabled={extractionLoading} className="bg-teal text-white font-medium rounded-md hover:bg-teal/80 disabled:cursor-not-allowed disabled:opacity-50">
-            {extractionLoading ? 'Extracting...' : 'Extract Text'}
+            {extractionLoading ? (
+              <>
+                Extracting...
+                <Loader2 className="ml-2 h-4 w-4 animate-spin" />
+              </>
+            ) : (
+              'Extract Text'
+            )}
           </Button>
 
           <div className="flex flex-col space-y-2">
