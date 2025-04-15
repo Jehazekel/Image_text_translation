@@ -149,7 +149,7 @@ export default function Home() {
             </Button>
           </div>
 
-          <Button onClick={handleExtractText} disabled={extractionLoading} className="bg-teal text-white font-medium rounded-md hover:bg-teal/80 disabled:cursor-not-allowed disabled:opacity-50">
+          <Button onClick={handleExtractText} disabled={extractionLoading} className="bg-teal-500 text-white font-medium rounded-md hover:bg-teal/80 disabled:cursor-not-allowed disabled:opacity-50">
             {extractionLoading ? (
               <>
                 Extracting...
@@ -188,7 +188,7 @@ export default function Home() {
               </SelectContent>
             </Select>
 
-            <Button onClick={handleTranslate} disabled={translationLoading} className="bg-teal text-white font-medium rounded-md hover:bg-teal/80 disabled:cursor-not-allowed disabled:opacity-50">
+            <Button onClick={handleTranslate} disabled={translationLoading} className="bg-teal-500 text-white font-medium rounded-md hover:bg-teal/80 disabled:cursor-not-allowed disabled:opacity-50">
               {translationLoading ? 'Translating...' : 'Translate Text'}
             </Button>
           </div>
