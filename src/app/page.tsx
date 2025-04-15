@@ -8,14 +8,14 @@ import {extractTextFromImage} from '@/ai/flows/extract-text-from-image';
 import {translateExtractedText} from '@/ai/flows/translate-extracted-text';
 import {Card, CardContent, CardDescription, CardHeader, CardTitle} from '@/components/ui/card';
 import {useToast} from '@/hooks/use-toast';
-import {toast} from '@/hooks/use-toast';
 import {Input} from "@/components/ui/input";
 
 export default function Home() {
   const [extractedText, setExtractedText] = useState<string>('');
   const [translatedText, setTranslatedText] = useState<string>('');
   const [targetLanguage, setTargetLanguage] = useState<string>('es');
-  const [loading, setLoading] = useState<boolean>(false);
+  const [extractionLoading, setExtractionLoading] = useState<boolean>(false);
+  const [translationLoading, setTranslationLoading] = useState<boolean>(false);
   const {toast} = useToast();
   const [imageFile, setImageFile] = useState<File | null>(null);
 
@@ -29,8 +29,19 @@ export default function Home() {
       });
       return;
     }
+  };
 
-    setLoading(true);
+  const handleExtractText = async () => {
+    if (!imageFile) {
+      toast({
+        title: 'Error',
+        description: 'Please upload an image first.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    setExtractionLoading(true);
     try {
       const resolvedImageUrl = await fileToDataUrl(imageFile) as string;
 
@@ -49,7 +60,7 @@ export default function Home() {
       });
       setExtractedText('Error extracting text. Please try again.');
     } finally {
-      setLoading(false);
+      setExtractionLoading(false);
     }
   };
 
@@ -67,7 +78,7 @@ export default function Home() {
       return;
     }
 
-    setLoading(true);
+    setTranslationLoading(true);
     try {
       const translationResult = await translateExtractedText({text: extractedText, targetLanguage: targetLanguage});
       setTranslatedText(translationResult.translatedText);
@@ -84,7 +95,7 @@ export default function Home() {
       });
       setTranslatedText('Error translating text. Please try again.');
     } finally {
-      setLoading(false);
+      setTranslationLoading(false);
     }
   };
 
@@ -132,10 +143,14 @@ export default function Home() {
               onChange={handleImageFileChange}
               className="rounded-md shadow-sm focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
             />
-            <Button onClick={handleImageUpload} disabled={loading} className="bg-teal text-white font-medium rounded-md hover:bg-teal/80 disabled:cursor-not-allowed disabled:opacity-50">
-              {loading ? 'Extracting...' : 'Extract Text'}
+            <Button onClick={handleImageUpload} style={{display: 'none'}} disabled={extractionLoading} className="bg-teal text-white font-medium rounded-md hover:bg-teal/80 disabled:cursor-not-allowed disabled:opacity-50">
+              Upload Image
             </Button>
           </div>
+
+          <Button onClick={handleExtractText} disabled={extractionLoading} className="bg-teal text-white font-medium rounded-md hover:bg-teal/80 disabled:cursor-not-allowed disabled:opacity-50">
+            {extractionLoading ? 'Extracting...' : 'Extract Text'}
+          </Button>
 
           <div className="flex flex-col space-y-2">
             <label htmlFor="extractedText" className="text-sm font-medium leading-none text-foreground">
@@ -165,8 +180,8 @@ export default function Home() {
               </SelectContent>
             </Select>
 
-            <Button onClick={handleTranslate} disabled={loading} className="bg-teal text-white font-medium rounded-md hover:bg-teal/80 disabled:cursor-not-allowed disabled:opacity-50">
-              {loading ? 'Translating...' : 'Translate Text'}
+            <Button onClick={handleTranslate} disabled={translationLoading} className="bg-teal text-white font-medium rounded-md hover:bg-teal/80 disabled:cursor-not-allowed disabled:opacity-50">
+              {translationLoading ? 'Translating...' : 'Translate Text'}
             </Button>
           </div>
 
