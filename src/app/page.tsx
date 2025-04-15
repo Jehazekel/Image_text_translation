@@ -1,6 +1,6 @@
 'use client';
 
-import {useState, useRef, useEffect} from 'react';
+import {useState} from 'react';
 import {Button} from '@/components/ui/button';
 import {Textarea} from '@/components/ui/textarea';
 import {Select, SelectContent, SelectItem, SelectTrigger, SelectValue} from '@/components/ui/select';
@@ -9,25 +9,22 @@ import {translateExtractedText} from '@/ai/flows/translate-extracted-text';
 import {Card, CardContent, CardDescription, CardHeader, CardTitle} from '@/components/ui/card';
 import {useToast} from '@/hooks/use-toast';
 import {toast} from '@/hooks/use-toast';
-import { Input } from "@/components/ui/input";
+import {Input} from "@/components/ui/input";
 
 export default function Home() {
-  const [imageUrl, setImageUrl] = useState<string>('');
   const [extractedText, setExtractedText] = useState<string>('');
   const [translatedText, setTranslatedText] = useState<string>('');
   const [targetLanguage, setTargetLanguage] = useState<string>('es');
   const [loading, setLoading] = useState<boolean>(false);
   const {toast} = useToast();
-  const videoRef = useRef<HTMLVideoElement>(null);
   const [imageFile, setImageFile] = useState<File | null>(null);
 
 
-
   const handleImageUpload = async () => {
-    if (!imageUrl && !imageFile) {
+    if (!imageFile) {
       toast({
         title: 'Error',
-        description: 'Please enter an image URL or upload an image.',
+        description: 'Please upload an image.',
         variant: 'destructive',
       });
       return;
@@ -35,10 +32,7 @@ export default function Home() {
 
     setLoading(true);
     try {
-      let resolvedImageUrl = imageUrl;
-      if (imageFile) {
-        resolvedImageUrl = await fileToDataUrl(imageFile) as string;
-      }
+      const resolvedImageUrl = await fileToDataUrl(imageFile) as string;
 
       const extractionResult = await extractTextFromImage({photoUrl: resolvedImageUrl});
       setExtractedText(extractionResult.extractedText);
@@ -97,7 +91,6 @@ export default function Home() {
   const handleImageFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
       setImageFile(e.target.files[0]);
-      setImageUrl(''); // Clear the URL input when a file is uploaded
     }
   };
 
@@ -137,20 +130,6 @@ export default function Home() {
               id="imageFile"
               accept="image/*"
               onChange={handleImageFileChange}
-              className="rounded-md shadow-sm focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
-            />
-          </div>
-
-          <div className="flex flex-col space-y-2">
-            <label htmlFor="imageUrl" className="text-sm font-medium leading-none text-foreground">
-              Image URL
-            </label>
-            <Input
-              type="url"
-              id="imageUrl"
-              placeholder="Enter image URL"
-              value={imageUrl}
-              onChange={(e) => setImageUrl(e.target.value)}
               className="rounded-md shadow-sm focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
             />
             <Button onClick={handleImageUpload} disabled={loading} className="bg-teal text-white font-medium rounded-md hover:bg-teal/80 disabled:cursor-not-allowed disabled:opacity-50">
