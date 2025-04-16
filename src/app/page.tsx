@@ -129,7 +129,7 @@ export default function Home() {
     <div className="flex flex-col items-center justify-start min-h-screen bg-secondary p-4">
       <Card className="w-full max-w-[600px] space-y-4 rounded-lg shadow-md bg-card">
         <CardHeader>
-          <CardTitle className="text-lg font-semibold text-foreground">LinguaLens</CardTitle>
+          <CardTitle className="text-lg font-semibold text-foreground">Image Translator</CardTitle>
           <CardDescription className="text-sm text-muted-foreground">
             Upload an image, extract text, and translate it!
           </CardDescription>

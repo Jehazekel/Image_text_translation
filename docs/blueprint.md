@@ -1,4 +1,4 @@
-# **App Name**: LinguaLens
+# **App Name**: Image Translator
 
 ## Core Features:
 
