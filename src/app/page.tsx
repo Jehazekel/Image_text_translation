@@ -1,3 +1,4 @@
+
 'use client';
 
 import {useState} from 'react';
@@ -10,6 +11,7 @@ import {Card, CardContent, CardDescription, CardHeader, CardTitle} from '@/compo
 import {useToast} from '@/hooks/use-toast';
 import {Input} from "@/components/ui/input";
 import {Loader2} from "lucide-react";
+import ReactMarkdown from 'react-markdown';
 
 export default function Home() {
   const [extractedText, setExtractedText] = useState<string>('');
@@ -204,6 +206,14 @@ export default function Home() {
               placeholder="Translated text will appear here"
               className="rounded-md shadow-sm focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
             />
+          </div>
+          <div className="flex flex-col space-y-2">
+            <label htmlFor="markdownOutput" className="text-sm font-medium leading-none text-foreground">
+              Markdown Output
+            </label>
+            <div className="border rounded-md p-4 bg-secondary">
+              <ReactMarkdown>{translatedText}</ReactMarkdown>
+            </div>
           </div>
         </CardContent>
       </Card>
