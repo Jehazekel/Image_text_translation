@@ -12,6 +12,7 @@ import {useToast} from '@/hooks/use-toast';
 import {Input} from "@/components/ui/input";
 import {Loader2} from "lucide-react";
 import ReactMarkdown from 'react-markdown';
+import Markdown from '@/components/ui/markdown';
 
 export default function Home() {
   const [extractedText, setExtractedText] = useState<string>('');
@@ -126,7 +127,7 @@ export default function Home() {
 
   return (
     <div className="flex flex-col items-center justify-start min-h-screen bg-secondary p-4">
-      <Card className="w-full max-w-md space-y-4 rounded-lg shadow-md bg-card">
+      <Card className="w-full max-w-[600px] space-y-4 rounded-lg shadow-md bg-card">
         <CardHeader>
           <CardTitle className="text-lg font-semibold text-foreground">LinguaLens</CardTitle>
           <CardDescription className="text-sm text-muted-foreground">
@@ -195,7 +196,7 @@ export default function Home() {
             </Button>
           </div>
 
-          <div className="flex flex-col space-y-2">
+          {/* <div className="flex flex-col space-y-2">
             <label htmlFor="translatedText" className="text-sm font-medium leading-none text-foreground">
               Translated Text
             </label>
@@ -206,13 +207,13 @@ export default function Home() {
               placeholder="Translated text will appear here"
               className="rounded-md shadow-sm focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
             />
-          </div>
+          </div> */}
           <div className="flex flex-col space-y-2">
             <label htmlFor="markdownOutput" className="text-sm font-medium leading-none text-foreground">
-              Markdown Output
+            Translated Text
             </label>
-            <div className="border rounded-md p-4 bg-secondary">
-              <ReactMarkdown>{translatedText}</ReactMarkdown>
+            <div className="border max-h-[250px] overflow-y-auto rounded-md p-4 bg-secondary">
+              <Markdown text={translatedText}/>
             </div>
           </div>
         </CardContent>

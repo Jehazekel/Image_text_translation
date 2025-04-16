@@ -6,6 +6,10 @@ body {
   font-family: Arial, Helvetica, sans-serif;
 }
 
+td, th {
+  padding : 8px
+}
+
 @layer base {
   :root {
     --background: 0 0% 100%; /* White */
