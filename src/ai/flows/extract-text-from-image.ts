@@ -36,7 +36,7 @@ const prompt = ai.definePrompt({
       extractedText: z.string().describe('The extracted text from the image.'),
     }),
   },
-  prompt: `You are an OCR service. Extract the text from the image at the following URL: {{media url=photoUrl}}.\n\n Format Extracted text similar to the image text format. For table formats, use 3 tab spaces to separate a column. \n\nExtracted Text:`,
+  prompt: `You are an OCR service. First check if Image is veritcal & rotate if necessary.\n\n Then Extract the text from the image at the following URL: {{media url=photoUrl}}.\n\n Format Extracted text similar to the image text format. For table formats, use 3 tab spaces to separate a column. \n\nExtracted Text:`,
 });
 
 const extractTextFromImageFlow = ai.defineFlow<
