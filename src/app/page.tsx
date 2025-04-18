@@ -26,11 +26,14 @@ export default function Home() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [hasCameraPermission, setHasCameraPermission] = useState<boolean>(false);
   const [isCameraActive, setIsCameraActive] = useState<boolean>(false);
+  const [imagePreviewUrl, setImagePreviewUrl] = useState<string | null>(null);
 
   useEffect(() => {
     const getCameraPermission = async () => {
       try {
-        const stream = await navigator.mediaDevices.getUserMedia({video: true});
+        const stream = await navigator.mediaDevices.getUserMedia({
+          video: true
+        });
         setHasCameraPermission(true);
 
         if (videoRef.current) {
@@ -50,16 +53,6 @@ export default function Home() {
     getCameraPermission();
   }, []);
 
-  const handleImageUpload = async () => {
-    if (!imageFile) {
-      toast({
-        title: 'Error',
-        description: 'Please upload an image.',
-        variant: 'destructive',
-      });
-      return;
-    }
-  };
 
   const handleExtractText = async () => {
     if (!imageFile) {
@@ -131,7 +124,9 @@ export default function Home() {
 
   const handleImageFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
-      setImageFile(e.target.files[0]);
+      const file = e.target.files[0];
+      setImageFile(file);
+      updateImagePreview(file);
     }
   };
 
@@ -163,6 +158,7 @@ export default function Home() {
           if (blob) {
             const capturedImageFile = new File([blob], 'capturedImage.jpg', {type: 'image/jpeg'});
             setImageFile(capturedImageFile);
+            updateImagePreview(capturedImageFile);
             setIsCameraActive(false);
           }
         }, 'image/jpeg');
@@ -173,6 +169,15 @@ export default function Home() {
   const toggleCamera = () => {
     setIsCameraActive(!isCameraActive);
     setImageFile(null);
+    setImagePreviewUrl(null);
+  };
+
+  const updateImagePreview = (file: File) => {
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setImagePreviewUrl(reader.result as string);
+    };
+    reader.readAsDataURL(file);
   };
 
 
@@ -190,19 +195,19 @@ export default function Home() {
             <Button
               onClick={toggleCamera}
               variant="outline"
-              className="bg-secondary text-foreground font-medium rounded-md hover:bg-secondary/80 disabled:cursor-not-allowed disabled:opacity-50"
+              className="bg-secondary text-foreground font-medium rounded-md disabled:cursor-not-allowed disabled:opacity-50"
             >
               {isCameraActive ? 'Close Camera' : 'Open Camera'}
-              <Camera className="ml-2 h-4 w-4" />
+              <Camera size={48}  className="ml-2 h-4 w-4" />
             </Button>
 
             {isCameraActive && hasCameraPermission ? (
               <>
-                <video ref={videoRef} className="w-full aspect-video rounded-md" autoPlay muted />
+                <video ref={videoRef} className="w-full aspect-video rounded-md" autoPlay muted style={{ border : '1px green solid'}}/>
                 <Button onClick={captureImage} className="bg-teal-500 text-white font-medium rounded-md hover:bg-teal/80 disabled:cursor-not-allowed disabled:opacity-50">
                   Capture Image
                 </Button>
-                <canvas ref={canvasRef} style={{display: 'none'}} />
+                <canvas ref={canvasRef} style={{display: 'none' , border : '1px green solid'}} />
               </>
             ) : isCameraActive && !(hasCameraPermission) ? (
               <Alert variant="destructive">
@@ -223,12 +228,20 @@ export default function Home() {
                   onChange={handleImageFileChange}
                   className="rounded-md shadow-sm focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
                 />
-                <Button onClick={handleImageUpload} style={{display: 'none'}} disabled={extractionLoading} className="bg-teal text-white font-medium rounded-md hover:bg-teal/80 disabled:cursor-not-allowed disabled:opacity-50">
-                  Upload Image
-                </Button>
+
               </>
             )}
           </div>
+
+          {imagePreviewUrl && (
+            <div className="flex justify-center">
+              <img
+                src={imagePreviewUrl}
+                alt="Image Preview"
+                className="max-w-full max-h-[200px] rounded-md"
+              />
+            </div>
+          )}
 
           <Button onClick={handleExtractText} disabled={extractionLoading} className="bg-teal-500 text-white font-medium rounded-md hover:bg-teal/80 disabled:cursor-not-allowed disabled:opacity-50">
             {extractionLoading ? (
@@ -274,18 +287,6 @@ export default function Home() {
             </Button>
           </div>
 
-          {/* <div className="flex flex-col space-y-2">
-            <label htmlFor="translatedText" className="text-sm font-medium leading-none text-foreground">
-              Translated Text
-            </label>
-            <Textarea
-              id="translatedText"
-              value={translatedText}
-              readOnly
-              placeholder="Translated text will appear here"
-              className="rounded-md shadow-sm focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
-            />
-          </div> */}
           <div className="flex flex-col space-y-2">
             <label htmlFor="markdownOutput" className="text-sm font-medium leading-none text-foreground">
               Translated Text
