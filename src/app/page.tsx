@@ -1,7 +1,6 @@
-
 'use client';
 
-import {useState} from 'react';
+import {useState, useRef, useEffect} from 'react';
 import {Button} from '@/components/ui/button';
 import {Textarea} from '@/components/ui/textarea';
 import {Select, SelectContent, SelectItem, SelectTrigger, SelectValue} from '@/components/ui/select';
@@ -10,9 +9,10 @@ import {translateExtractedText} from '@/ai/flows/translate-extracted-text';
 import {Card, CardContent, CardDescription, CardHeader, CardTitle} from '@/components/ui/card';
 import {useToast} from '@/hooks/use-toast';
 import {Input} from "@/components/ui/input";
-import {Loader2} from "lucide-react";
+import {Loader2, Camera} from "lucide-react";
 import ReactMarkdown from 'react-markdown';
 import Markdown from '@/components/ui/markdown';
+import {Alert, AlertDescription, AlertTitle} from "@/components/ui/alert";
 
 export default function Home() {
   const [extractedText, setExtractedText] = useState<string>('');
@@ -22,7 +22,33 @@ export default function Home() {
   const [translationLoading, setTranslationLoading] = useState<boolean>(false);
   const {toast} = useToast();
   const [imageFile, setImageFile] = useState<File | null>(null);
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const [hasCameraPermission, setHasCameraPermission] = useState<boolean>(false);
+  const [isCameraActive, setIsCameraActive] = useState<boolean>(false);
 
+  useEffect(() => {
+    const getCameraPermission = async () => {
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({video: true});
+        setHasCameraPermission(true);
+
+        if (videoRef.current) {
+          videoRef.current.srcObject = stream;
+        }
+      } catch (error) {
+        console.error('Error accessing camera:', error);
+        setHasCameraPermission(false);
+        toast({
+          variant: 'destructive',
+          title: 'Camera Access Denied',
+          description: 'Please enable camera permissions in your browser settings to use this app.',
+        });
+      }
+    };
+
+    getCameraPermission();
+  }, []);
 
   const handleImageUpload = async () => {
     if (!imageFile) {
@@ -124,6 +150,31 @@ export default function Home() {
     });
   };
 
+  const captureImage = () => {
+    if (videoRef.current && canvasRef.current) {
+      const video = videoRef.current;
+      const canvas = canvasRef.current;
+      canvas.width = video.videoWidth;
+      canvas.height = video.videoHeight;
+      const ctx = canvas.getContext('2d');
+      if (ctx) {
+        ctx.drawImage(video, 0, 0, video.videoWidth, video.videoHeight);
+        canvas.toBlob((blob) => {
+          if (blob) {
+            const capturedImageFile = new File([blob], 'capturedImage.jpg', {type: 'image/jpeg'});
+            setImageFile(capturedImageFile);
+            setIsCameraActive(false);
+          }
+        }, 'image/jpeg');
+      }
+    }
+  };
+
+  const toggleCamera = () => {
+    setIsCameraActive(!isCameraActive);
+    setImageFile(null);
+  };
+
 
   return (
     <div className="flex flex-col items-center justify-start min-h-screen bg-secondary p-4">
@@ -135,21 +186,48 @@ export default function Home() {
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-
           <div className="flex flex-col space-y-2">
-            <label htmlFor="imageFile" className="text-sm font-medium leading-none text-foreground">
-              Upload Image
-            </label>
-            <Input
-              type="file"
-              id="imageFile"
-              accept="image/*"
-              onChange={handleImageFileChange}
-              className="rounded-md shadow-sm focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
-            />
-            <Button onClick={handleImageUpload} style={{display: 'none'}} disabled={extractionLoading} className="bg-teal text-white font-medium rounded-md hover:bg-teal/80 disabled:cursor-not-allowed disabled:opacity-50">
-              Upload Image
+            <Button
+              onClick={toggleCamera}
+              variant="outline"
+              className="bg-secondary text-foreground font-medium rounded-md hover:bg-secondary/80 disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              {isCameraActive ? 'Close Camera' : 'Open Camera'}
+              <Camera className="ml-2 h-4 w-4" />
             </Button>
+
+            {isCameraActive && hasCameraPermission ? (
+              <>
+                <video ref={videoRef} className="w-full aspect-video rounded-md" autoPlay muted />
+                <Button onClick={captureImage} className="bg-teal-500 text-white font-medium rounded-md hover:bg-teal/80 disabled:cursor-not-allowed disabled:opacity-50">
+                  Capture Image
+                </Button>
+                <canvas ref={canvasRef} style={{display: 'none'}} />
+              </>
+            ) : isCameraActive && !(hasCameraPermission) ? (
+              <Alert variant="destructive">
+                <AlertTitle>Camera Access Required</AlertTitle>
+                <AlertDescription>
+                  Please allow camera access to use this feature.
+                </AlertDescription>
+              </Alert>
+            ) : (
+              <>
+                <label htmlFor="imageFile" className="text-sm font-medium leading-none text-foreground">
+                  Upload Image
+                </label>
+                <Input
+                  type="file"
+                  id="imageFile"
+                  accept="image/*"
+                  onChange={handleImageFileChange}
+                  className="rounded-md shadow-sm focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
+                />
+                <Button onClick={handleImageUpload} style={{display: 'none'}} disabled={extractionLoading} className="bg-teal text-white font-medium rounded-md hover:bg-teal/80 disabled:cursor-not-allowed disabled:opacity-50">
+                  Upload Image
+                </Button>
+              </>
+            )}
           </div>
 
           <Button onClick={handleExtractText} disabled={extractionLoading} className="bg-teal-500 text-white font-medium rounded-md hover:bg-teal/80 disabled:cursor-not-allowed disabled:opacity-50">
@@ -210,7 +288,7 @@ export default function Home() {
           </div> */}
           <div className="flex flex-col space-y-2">
             <label htmlFor="markdownOutput" className="text-sm font-medium leading-none text-foreground">
-            Translated Text
+              Translated Text
             </label>
             <div className="border max-h-[250px] overflow-y-auto rounded-md p-4 bg-secondary">
               <Markdown text={translatedText}/>
