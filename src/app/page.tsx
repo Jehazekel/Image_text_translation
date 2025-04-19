@@ -176,51 +176,51 @@ export default function Home() {
   const [checkingCamera, setCheckingCamera] = useState(false);
 
 
-  useEffect(() => {
-    async function getMedia(constraints: MediaStreamConstraints | undefined) {
-      let stream = null;
+  // useEffect(() => {
+  //   async function getMedia(constraints: MediaStreamConstraints | undefined) {
+  //     let stream = null;
 
-      try {
-        stream = await navigator.mediaDevices.getUserMedia(constraints);
-        /* use the stream */
-        return true;
-      } catch (err) {
-        console.log('Error fetching camera with constraints: ', constraints, err)
-        /* handle the error */
-        return false
-      }
-    }
+  //     try {
+  //       stream = await navigator.mediaDevices.getUserMedia(constraints);
+  //       /* use the stream */
+  //       return true;
+  //     } catch (err) {
+  //       console.log('Error fetching camera with constraints: ', constraints, err)
+  //       /* handle the error */
+  //       return false
+  //     }
+  //   }
 
-    async function checkCameras() {
+  //   async function checkCameras() {
 
-      // check for front camera 
-      const hasFrontCamera = await getMedia({
-        video: {
-          facingMode: 'user',
-        },
-      });
-      const hasBackCamera = await getMedia({
-        video: {
-          facingMode: { exact: "environment" },
-        },
-      });
-      if (hasFrontCamera && !hasBackCamera)
-        setUseFrontCamera(true)
-      setCameraInfo({ hasFrontCamera, hasBackCamera })
-      setCheckingCamera(false);
-    };
+  //     // check for front camera 
+  //     const hasFrontCamera = await getMedia({
+  //       video: {
+  //         facingMode: 'user',
+  //       },
+  //     });
+  //     const hasBackCamera = await getMedia({
+  //       video: {
+  //         facingMode: { exact: "environment" },
+  //       },
+  //     });
+  //     if (hasFrontCamera && !hasBackCamera)
+  //       setUseFrontCamera(true)
+  //     setCameraInfo({ hasFrontCamera, hasBackCamera })
+  //     setCheckingCamera(false);
+  //   };
 
-    setCheckingCamera(true);
-    checkCameras();
-  }, [])
+  //   setCheckingCamera(true);
+  //   checkCameras();
+  // }, [])
 
 
-  const videoConstraints = useMemo(() => {
-    return {
-      facingMode: cameraInfo.hasFrontCamera && useFrontCamera ? 'user' :
-        cameraInfo.hasBackCamera ? { exact: "environment" } : ''
-    }
-  }, [cameraInfo, useFrontCamera]);
+  // const videoConstraints = useMemo(() => {
+  //   return {
+  //     facingMode: cameraInfo.hasFrontCamera && useFrontCamera ? 'user' :
+  //       cameraInfo.hasBackCamera ? { exact: "environment" } : ''
+  //   }
+  // }, [cameraInfo, useFrontCamera]);
 
   return (
     <div className="flex flex-col items-center justify-start min-h-screen bg-secondary p-4">
@@ -229,13 +229,13 @@ export default function Home() {
           <CardTitle className="text-lg font-semibold text-foreground">Image Translator</CardTitle>
           <CardDescription className="text-sm text-muted-foreground">
             Upload an image, extract text, and translate it! <br/>
-            has front camera : {`${cameraInfo.hasFrontCamera}`} <br/>
-            has back camera : {`${cameraInfo.hasBackCamera}`}
+            {/* has front camera : {`${cameraInfo.hasFrontCamera}`} <br/>
+            has back camera : {`${cameraInfo.hasBackCamera}`} */}
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="flex flex-col space-y-2">
-            <Button
+            {/* <Button
               onClick={toggleCamera}
               disabled={checkingCamera}
               variant="outline"
@@ -245,9 +245,9 @@ export default function Home() {
                 :
                 isCameraActive ? 'Close Camera' : 'Open Camera'
               }
-            </Button>
+            </Button> */}
 
-            {isCameraActive && hasCameraPermission ? (
+            {/* {isCameraActive && hasCameraPermission ? (
               <>
                 <Webcam
                   audio={false}
@@ -273,7 +273,8 @@ export default function Home() {
 
                 <canvas ref={canvasRef} style={{ display: 'none', border: '1px green solid' }} />
               </>
-            ) : (
+            ) :  */}
+           
               <>
                 <label htmlFor="imageFile" className="text-sm font-medium leading-none text-foreground">
                   Upload Image
@@ -288,14 +289,16 @@ export default function Home() {
                 />
 
               </>
-            )}
+           
+            {/* } */}
           </div>
 
-          {imagePreviewUrl && (
-            (cameraInfo.hasFrontCamera && useFrontCamera) || (cameraInfo.hasBackCamera && !useFrontCamera)
-          )
-            ?
-            (
+          {imagePreviewUrl && 
+          // (
+          //   (cameraInfo.hasFrontCamera && useFrontCamera) || (cameraInfo.hasBackCamera && !useFrontCamera)
+          // )
+            // ?
+           
               <div className='flex flex-col gap-2'>
                 <div className="flex justify-center">
                   <img
@@ -308,9 +311,9 @@ export default function Home() {
                   Remove Image
                 </Button>
               </div>
-            )
-            :
-            <></>
+           
+            // :
+            // <></>
           }
 
           <Button onClick={handleExtractText} disabled={extractionLoading} className="bg-teal-500 text-white font-medium rounded-md hover:bg-teal/80 disabled:cursor-not-allowed disabled:opacity-50">
