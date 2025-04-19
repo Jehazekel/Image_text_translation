@@ -13,6 +13,7 @@ import {Loader2, Camera} from "lucide-react";
 import ReactMarkdown from 'react-markdown';
 import Markdown from '@/components/ui/markdown';
 import {Alert, AlertDescription, AlertTitle} from "@/components/ui/alert";
+import Webcam from "react-webcam";
 
 export default function Home() {
   const [extractedText, setExtractedText] = useState<string>('');
@@ -22,36 +23,11 @@ export default function Home() {
   const [translationLoading, setTranslationLoading] = useState<boolean>(false);
   const {toast} = useToast();
   const [imageFile, setImageFile] = useState<File | null>(null);
-  const videoRef = useRef<HTMLVideoElement>(null);
+  const webcamRef = useRef<Webcam>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const [hasCameraPermission, setHasCameraPermission] = useState<boolean>(false);
+  const [hasCameraPermission, setHasCameraPermission] = useState<boolean>(true);
   const [isCameraActive, setIsCameraActive] = useState<boolean>(false);
   const [imagePreviewUrl, setImagePreviewUrl] = useState<string | null>(null);
-
-  useEffect(() => {
-    const getCameraPermission = async () => {
-      try {
-        const stream = await navigator.mediaDevices.getUserMedia({
-          video: true
-        });
-        setHasCameraPermission(true);
-
-        if (videoRef.current) {
-          videoRef.current.srcObject = stream;
-        }
-      } catch (error) {
-        console.error('Error accessing camera:', error);
-        setHasCameraPermission(false);
-        toast({
-          variant: 'destructive',
-          title: 'Camera Access Denied',
-          description: 'Please enable camera permissions in your browser settings to use this app.',
-        });
-      }
-    };
-
-    getCameraPermission();
-  }, []);
 
 
   const handleExtractText = async () => {
@@ -146,24 +122,35 @@ export default function Home() {
   };
 
   const captureImage = () => {
-    if (videoRef.current && canvasRef.current) {
-      const video = videoRef.current;
-      const canvas = canvasRef.current;
-      canvas.width = video.videoWidth;
-      canvas.height = video.videoHeight;
-      const ctx = canvas.getContext('2d');
-      if (ctx) {
-        ctx.drawImage(video, 0, 0, video.videoWidth, video.videoHeight);
-        canvas.toBlob((blob) => {
-          if (blob) {
-            const capturedImageFile = new File([blob], 'capturedImage.jpg', {type: 'image/jpeg'});
-            setImageFile(capturedImageFile);
-            updateImagePreview(capturedImageFile);
-            setIsCameraActive(false);
-          }
-        }, 'image/jpeg');
+    if (webcamRef.current && canvasRef.current) {
+      const imageSrc = webcamRef.current.getScreenshot();
+      if (imageSrc) {
+        dataURLtoFile(imageSrc, 'capturedImage.jpg').then(capturedImageFile => {
+          setImageFile(capturedImageFile);
+          updateImagePreview(capturedImageFile);
+          setIsCameraActive(false);
+        });
       }
     }
+  };
+
+  const dataURLtoFile = (dataurl: string, filename: string): Promise<File> => {
+    return new Promise((resolve, reject) => {
+      const arr = dataurl.split(',');
+      const mime = arr[0].match(/:(.*?);/)?.[1];
+      const bstr = atob(arr[1]);
+      let n = bstr.length;
+      const u8arr = new Uint8Array(n);
+      while (n--) {
+        u8arr[n] = bstr.charCodeAt(n);
+      }
+      try {
+        const file = new File([u8arr], filename, {type: mime});
+        resolve(file);
+      } catch (e) {
+        reject(e);
+      }
+    });
   };
 
   const toggleCamera = () => {
@@ -198,24 +185,21 @@ export default function Home() {
               className="bg-secondary text-foreground font-medium rounded-md disabled:cursor-not-allowed disabled:opacity-50"
             >
               {isCameraActive ? 'Close Camera' : 'Open Camera'}
-              <Camera size={48}  className="ml-2 h-4 w-4" />
             </Button>
 
             {isCameraActive && hasCameraPermission ? (
               <>
-                <video ref={videoRef} className="w-full aspect-video rounded-md" autoPlay muted style={{ border : '1px green solid'}}/>
+                <Webcam
+                  audio={false}
+                  ref={webcamRef}
+                  className="w-full aspect-video rounded-md"
+                  screenshotFormat="image/jpeg"
+                />
                 <Button onClick={captureImage} className="bg-teal-500 text-white font-medium rounded-md hover:bg-teal/80 disabled:cursor-not-allowed disabled:opacity-50">
                   Capture Image
                 </Button>
                 <canvas ref={canvasRef} style={{display: 'none' , border : '1px green solid'}} />
               </>
-            ) : isCameraActive && !(hasCameraPermission) ? (
-              <Alert variant="destructive">
-                <AlertTitle>Camera Access Required</AlertTitle>
-                <AlertDescription>
-                  Please allow camera access to use this feature.
-                </AlertDescription>
-              </Alert>
             ) : (
               <>
                 <label htmlFor="imageFile" className="text-sm font-medium leading-none text-foreground">
