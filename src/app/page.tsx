@@ -282,6 +282,7 @@ export default function Home() {
                   type="file"
                   id="imageFile"
                   accept="image/*"
+                  capture="environment"
                   onChange={handleImageFileChange}
                   className="rounded-md shadow-sm focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
                 />
