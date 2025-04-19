@@ -228,7 +228,9 @@ export default function Home() {
         <CardHeader>
           <CardTitle className="text-lg font-semibold text-foreground">Image Translator</CardTitle>
           <CardDescription className="text-sm text-muted-foreground">
-            Upload an image, extract text, and translate it!
+            Upload an image, extract text, and translate it! <br/>
+            has front camera : {`${cameraInfo.hasFrontCamera}`} <br/>
+            has back camera : {`${cameraInfo.hasBackCamera}`}
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
