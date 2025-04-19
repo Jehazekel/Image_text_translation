@@ -1,18 +1,18 @@
 'use client';
 
-import {useState, useRef, useEffect} from 'react';
-import {Button} from '@/components/ui/button';
-import {Textarea} from '@/components/ui/textarea';
-import {Select, SelectContent, SelectItem, SelectTrigger, SelectValue} from '@/components/ui/select';
-import {extractTextFromImage} from '@/ai/flows/extract-text-from-image';
-import {translateExtractedText} from '@/ai/flows/translate-extracted-text';
-import {Card, CardContent, CardDescription, CardHeader, CardTitle} from '@/components/ui/card';
-import {useToast} from '@/hooks/use-toast';
-import {Input} from "@/components/ui/input";
-import {Loader2, Camera} from "lucide-react";
+import { useState, useRef, useEffect, useMemo } from 'react';
+import { Button } from '@/components/ui/button';
+import { Textarea } from '@/components/ui/textarea';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { extractTextFromImage } from '@/ai/flows/extract-text-from-image';
+import { translateExtractedText } from '@/ai/flows/translate-extracted-text';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { useToast } from '@/hooks/use-toast';
+import { Input } from "@/components/ui/input";
+import { Loader2, Camera } from "lucide-react";
 import ReactMarkdown from 'react-markdown';
 import Markdown from '@/components/ui/markdown';
-import {Alert, AlertDescription, AlertTitle} from "@/components/ui/alert";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import Webcam from "react-webcam";
 
 export default function Home() {
@@ -21,7 +21,7 @@ export default function Home() {
   const [targetLanguage, setTargetLanguage] = useState<string>('es');
   const [extractionLoading, setExtractionLoading] = useState<boolean>(false);
   const [translationLoading, setTranslationLoading] = useState<boolean>(false);
-  const {toast} = useToast();
+  const { toast } = useToast();
   const [imageFile, setImageFile] = useState<File | null>(null);
   const webcamRef = useRef<Webcam>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -44,7 +44,7 @@ export default function Home() {
     try {
       const resolvedImageUrl = await fileToDataUrl(imageFile) as string;
 
-      const extractionResult = await extractTextFromImage({photoUrl: resolvedImageUrl});
+      const extractionResult = await extractTextFromImage({ photoUrl: resolvedImageUrl });
       setExtractedText(extractionResult.extractedText);
       toast({
         title: 'Text Extracted',
@@ -79,7 +79,7 @@ export default function Home() {
 
     setTranslationLoading(true);
     try {
-      const translationResult = await translateExtractedText({text: extractedText, targetLanguage: targetLanguage});
+      const translationResult = await translateExtractedText({ text: extractedText, targetLanguage: targetLanguage });
       setTranslatedText(translationResult.translatedText);
       toast({
         title: 'Text Translated',
@@ -145,7 +145,7 @@ export default function Home() {
         u8arr[n] = bstr.charCodeAt(n);
       }
       try {
-        const file = new File([u8arr], filename, {type: mime});
+        const file = new File([u8arr], filename, { type: mime });
         resolve(file);
       } catch (e) {
         reject(e);
@@ -153,10 +153,14 @@ export default function Home() {
     });
   };
 
-  const toggleCamera = () => {
-    setIsCameraActive(!isCameraActive);
+  const removeImage = () => {
     setImageFile(null);
     setImagePreviewUrl(null);
+  };
+
+  const toggleCamera = () => {
+    setIsCameraActive(!isCameraActive);
+    removeImage();
   };
 
   const updateImagePreview = (file: File) => {
@@ -167,6 +171,56 @@ export default function Home() {
     reader.readAsDataURL(file);
   };
 
+  const [useFrontCamera, setUseFrontCamera] = useState(false); // default to use the back camera
+  const [cameraInfo, setCameraInfo] = useState({ hasFrontCamera: false, hasBackCamera: false });
+  const [checkingCamera, setCheckingCamera] = useState(false);
+
+
+  useEffect(() => {
+    async function getMedia(constraints: MediaStreamConstraints | undefined) {
+      let stream = null;
+
+      try {
+        stream = await navigator.mediaDevices.getUserMedia(constraints);
+        /* use the stream */
+        return true;
+      } catch (err) {
+        console.log('Error fetching camera with constraints: ', constraints, err)
+        /* handle the error */
+        return false
+      }
+    }
+
+    async function checkCameras() {
+
+      // check for front camera 
+      const hasFrontCamera = await getMedia({
+        video: {
+          facingMode: 'user',
+        },
+      });
+      const hasBackCamera = await getMedia({
+        video: {
+          facingMode: { exact: "environment" },
+        },
+      });
+      if (hasFrontCamera && !hasBackCamera)
+        setUseFrontCamera(true)
+      setCameraInfo({ hasFrontCamera, hasBackCamera })
+      setCheckingCamera(false);
+    };
+
+    setCheckingCamera(true);
+    checkCameras();
+  }, [])
+
+
+  const videoConstraints = useMemo(() => {
+    return {
+      facingMode: cameraInfo.hasFrontCamera && useFrontCamera ? 'user' :
+        cameraInfo.hasBackCamera ? { exact: "environment" } : ''
+    }
+  }, [cameraInfo, useFrontCamera]);
 
   return (
     <div className="flex flex-col items-center justify-start min-h-screen bg-secondary p-4">
@@ -181,10 +235,14 @@ export default function Home() {
           <div className="flex flex-col space-y-2">
             <Button
               onClick={toggleCamera}
+              disabled={checkingCamera}
               variant="outline"
               className="bg-secondary text-foreground font-medium rounded-md disabled:cursor-not-allowed disabled:opacity-50"
             >
-              {isCameraActive ? 'Close Camera' : 'Open Camera'}
+              {checkingCamera ? <Loader2 className="ml-2 h-4 w-4 animate-spin" />
+                :
+                isCameraActive ? 'Close Camera' : 'Open Camera'
+              }
             </Button>
 
             {isCameraActive && hasCameraPermission ? (
@@ -192,13 +250,26 @@ export default function Home() {
                 <Webcam
                   audio={false}
                   ref={webcamRef}
+                  videoConstraints={videoConstraints}
                   className="w-full aspect-video rounded-md"
                   screenshotFormat="image/jpeg"
                 />
+
                 <Button onClick={captureImage} className="bg-teal-500 text-white font-medium rounded-md hover:bg-teal/80 disabled:cursor-not-allowed disabled:opacity-50">
                   Capture Image
                 </Button>
-                <canvas ref={canvasRef} style={{display: 'none' , border : '1px green solid'}} />
+
+                {(cameraInfo.hasFrontCamera && !useFrontCamera) || (cameraInfo.hasBackCamera && useFrontCamera)
+                  ?
+                  <Button variant="outline" onClick={() => setUseFrontCamera(prev => !prev)} className="bg-secondary text-foreground font-medium rounded-md disabled:cursor-not-allowed disabled:opacity-50">
+                    Rotate Camera
+                  </Button>
+                  :
+                  <></>
+                }
+
+
+                <canvas ref={canvasRef} style={{ display: 'none', border: '1px green solid' }} />
               </>
             ) : (
               <>
@@ -218,14 +289,26 @@ export default function Home() {
           </div>
 
           {imagePreviewUrl && (
-            <div className="flex justify-center">
-              <img
-                src={imagePreviewUrl}
-                alt="Image Preview"
-                className="max-w-full max-h-[200px] rounded-md"
-              />
-            </div>
-          )}
+            (cameraInfo.hasFrontCamera && useFrontCamera) || (cameraInfo.hasBackCamera && !useFrontCamera)
+          )
+            ?
+            (
+              <div className='flex flex-col gap-2'>
+                <div className="flex justify-center">
+                  <img
+                    src={imagePreviewUrl}
+                    alt="Image Preview"
+                    className="max-w-full max-h-[200px] rounded-md"
+                  />
+                </div>
+                <Button onClick={removeImage} className="bg-teal-500 text-white font-medium rounded-md hover:bg-teal/80 disabled:cursor-not-allowed disabled:opacity-50">
+                  Remove Image
+                </Button>
+              </div>
+            )
+            :
+            <></>
+          }
 
           <Button onClick={handleExtractText} disabled={extractionLoading} className="bg-teal-500 text-white font-medium rounded-md hover:bg-teal/80 disabled:cursor-not-allowed disabled:opacity-50">
             {extractionLoading ? (
@@ -276,7 +359,7 @@ export default function Home() {
               Translated Text
             </label>
             <div className="border max-h-[250px] overflow-y-auto rounded-md p-4 bg-secondary">
-              <Markdown text={translatedText}/>
+              <Markdown text={translatedText} />
             </div>
           </div>
         </CardContent>
